@@ -1,5 +1,4 @@
 const fetch = require('node-fetch')
-const queryString = require('query-string')
 
 exports.sourceNodes = async (
   { actions, ...createNodeHelperFunctions },
@@ -23,7 +22,7 @@ exports.sourceNodes = async (
 
 const search = async ({ hostname, auth, cql, limit = 10 }) => {
   return await fetch(
-    `https://${hostname}/wiki/rest/api/content/search/?cql=(${cql})&expand=body.storage,history,ancestors&limit=${limit}`,
+    `https://${hostname}/wiki/rest/api/content/search/?cql=(${cql})&expand=body.view,history,ancestors&limit=${limit}`,
     {
       headers: {
         Authorization: auth,
@@ -51,8 +50,8 @@ const formatPageNode = (
       name: result.history.createdBy.displayName,
       email: result.history.createdBy.email,
     },
-    bodyHtml: result.body.storage.value,
     confluenceUrl: `${baseUrl}${result._links.webui}`,
+    bodyHtml: result.body.view.value,
   }
 
   const nodeId = createNodeId(`confluence-page-${content.confluenceId}`)
