@@ -4,7 +4,7 @@ A quick and dirty Gatsby source plugin for retrieving data from everybody's leas
 
 ## Installation
 
-`npm i --save @daniel-simpson/gatsby-source-confluence`
+`npm i --save gatsby-source-confluence`
 
 ## Usage
 
