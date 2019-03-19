@@ -13,9 +13,12 @@ exports.sourceNodes = async (
   const results = response.results.filter(result => result.type === 'page')
 
   // Parse into nodes and add to GraphQL schema
-  results.forEach(pageResult => {
-    const node = formatPageNode(createNodeHelperFunctions, pageResult, baseUrl)
-    //TODO: figure out how to set up page hierarchy
+  const nodes = results.map(pageResult =>
+    formatPageNode(createNodeHelperFunctions, pageResult, baseUrl)
+  )
+
+  nodes.forEach(node => {
+    // Create node
     createNode(node)
   })
 }
@@ -53,6 +56,7 @@ const formatPageNode = (
       email: result.history.createdBy.email,
     },
     bodyHtml: result.body.view.value,
+    ancestorIds: result.ancestors.map(x => x.id),
   }
 
   const nodeId = createNodeId(`confluence-page-${content.confluenceId}`)
