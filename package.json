@@ -1,6 +1,6 @@
 {
   "name": "gatsby-source-confluence",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A gatsby data source plugin for retrieving content out of Confluence for use on static sites",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
