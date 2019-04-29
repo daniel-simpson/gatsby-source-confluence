@@ -7,6 +7,15 @@ module.exports = {
   plugins: [
     `gatsby-plugin-react-helmet`,
     {
+      resolve: "gatsby-source-confluence",
+      options: {
+        hostname: "templates.atlassian.net",
+        auth: process.env.CONFLUENCE_AUTH || "", //Note: this is one of very few sites you could scrape without a valid auth token
+        cql: "id = 33189",
+        limit: 10,
+      },
+    },
+    {
       resolve: `gatsby-source-filesystem`,
       options: {
         name: `images`,
