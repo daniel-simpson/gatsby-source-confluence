@@ -15,7 +15,7 @@ const WikiPage = ({ data }) => {
         }}
       >
         <small>
-          <Link to="/wiki">&lt; Back</Link>
+          <Link to="/">&lt; Back</Link>
         </small>
         <small>
           <a href={confluenceUrl} target="_blank" rel="noopener noreferrer">
