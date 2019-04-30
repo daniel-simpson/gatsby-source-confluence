@@ -1,6 +1,6 @@
 {
   "name": "gatsby-source-confluence",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A gatsby data source plugin for retrieving content out of Confluence for use on static sites",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -9,6 +9,12 @@
     "type": "git",
     "url": "git+https://github.com/daniel-simpson/gatsby-source-confluence.git"
   },
+  "files": [
+    "index.js",
+    "gatsby-node.js",
+    "package.json",
+    "package-lock.json"
+  ],
   "keywords": [
     "gatsby",
     "gatsby-plugin",
