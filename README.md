@@ -2,6 +2,8 @@
 
 A quick and dirty Gatsby source plugin for retrieving data from everybody's least favourite content editor, Confluence.
 
+[An example site is available on Netlify](https://gatsby-source-confluence.netlify.com)
+
 ## Installation
 
 `npm i --save gatsby-source-confluence`
@@ -13,18 +15,18 @@ Add the following to your gatsby-config.js file:
 ```js
 module.exports = {
   plugins: [
-    'gatsby-plugin-react-helmet',
+    "gatsby-plugin-react-helmet",
     {
-      resolve: 'gatsby-source-confluence',
+      resolve: "gatsby-source-confluence",
       options: {
-        hostname: 'companyname.atlassian.net',
-        auth: 'Basic XXX...',
-        cql: 'ancestor = 534095277',
-        limit: 10,
-      },
-    },
-  ],
-}
+        hostname: "companyname.atlassian.net",
+        auth: "Basic XXX...",
+        cql: "ancestor = 534095277",
+        limit: 10
+      }
+    }
+  ]
+};
 ```
 
 Please ensure that the following parameters are set:
