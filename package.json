@@ -27,7 +27,7 @@
   },
   "homepage": "https://github.com/daniel-simpson/gatsby-source-confluence#readme",
   "dependencies": {
-    "axios": "^0.20.0",
+    "axios": "^0.21.1",
     "node-fetch": "^2.6.1"
   }
 }
