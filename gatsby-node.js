@@ -7,13 +7,13 @@ exports.sourceNodes = async (
   const { createNode } = actions
 
   // Get data from Confluence
-  const response = await search(pluginOptions)
+  const fetchURL = 'https://'+ pluginOptions.hostname +'/wiki/rest/api/content/search/?cql=('+ pluginOptions.cql +')&expand=body.view,metadata.labels,history,ancestors,children.attachment&limit='+ pluginOptions.limit
+  const response = await fetchRequest(fetchURL, pluginOptions.auth)
 
-  const baseUrl = response._links.base
-  const results = response.results.filter(result => result.type === 'page')
-
+  const baseUrl = 'https://'+ pluginOptions.hostname +'/wiki';
+  const pages = response.filter(result => result.type === 'page')
   // Parse into nodes and add to GraphQL schema
-  const nodes = results.map(pageResult =>
+  const nodes = pages.map(pageResult =>
     formatPageNode(createNodeHelperFunctions, pageResult, baseUrl)
   )
 
@@ -21,23 +21,67 @@ exports.sourceNodes = async (
     // Create node
     createNode(node)
   })
+  
+
 }
 
-const search = async ({ hostname, auth, cql, limit = 10 }) => {
-  return await fetch(
-    `https://${hostname}/wiki/rest/api/content/search/?cql=(${cql})&expand=body.view,history,ancestors&limit=${limit}`,
+var dataOut = [];
+//based on https://stackoverflow.com/questions/62337587/return-paginated-output-recursively-with-fetch-api
+async function fetchRequest(url, auth) {
+  try {
+    // Fetch request and parse as JSON
+    const response = await fetch(url,
     {
       headers: {
         Authorization: auth,
         Accept: 'application/json',
       },
+    });
+    let data = await response.json();
+    dataOut = dataOut.concat(data.results);
+
+    // Extract the url of the response's "next"
+    let next_page;
+    if ( data.hasOwnProperty("_links") ) {
+      if ( data._links.hasOwnProperty("next") ) {
+        next_page = data._links.base + data._links.next;
+      }
     }
-  )
-    .then(x => x.json())
-    .catch(e => {
-      console.error('Unable to retrieve data from Confluence:', e)
-      process.exit(1)
-    })
+
+    // If another page exists, merge its output into the array recursively
+    console.log('Fetch next_page: ' + next_page)
+    if (next_page) {
+      dataOut.concat( await fetchRequest(next_page, auth) );
+    }
+    return dataOut;
+  } catch (err) {
+    return console.error(err);
+  }
+}
+
+function updateLinksInHTML(html) {
+
+  const regexLinks = /href\s*=\s*(['"])(https?:\/\/eugem.+?|\/wiki\/.+?)\1/gm;
+  const regexId = /(?<=pages\/)([0-9]*)(?=\/)/i;
+  let link;
+  let newURL;
+  while((link = regexLinks.exec(html)) !== null) {
+    newURL = regexId.exec(link[2])
+    if (newURL) {
+
+      html = html.replace(link[2], '/wiki/' + newURL[0]);
+    }
+    
+  }
+
+  const regexLinks2 = /href\s*=\s*(['"])(https?:\/\/eugem.+?|\/wiki\/label\/EUGEM\/.+?)\1/gm;
+  let link2;
+  while((link2 = regexLinks2.exec(html)) !== null) {
+    html = html.replace('/wiki/label/EUGEM/', '/wiki/labels?s=');
+  }
+
+  return html;
+
 }
 
 const formatPageNode = (
@@ -45,18 +89,40 @@ const formatPageNode = (
   result,
   baseUrl
 ) => {
+  let htmlBody = updateLinksInHTML(result.body.view.value);
+  let pLabels = []
+  if (result.metadata.hasOwnProperty('labels')){
+    pLabels = result.metadata.labels.results;
+  }
+  let regexImage = /\.(gif|jpe?g|tiff?|png|webp|bmp)$/i
+  let pImages = []
+  if ( result.children.hasOwnProperty('attachment') ){
+    let allAttach = result.children.attachment.results;
+    for (let i=0; i<allAttach.length; i++){
+      let attach = allAttach[i];
+      if ( attach.hasOwnProperty('title') ){
+        if( regexImage.test(attach.title) ){
+          let imgURL = baseUrl + attach._links.download;
+          pImages.push(imgURL);
+        }
+      }
+    }
+  }
+
   content = {
     confluenceId: result.id,
     title: result.title,
-    slug: slugify(result.title),
+    slug: result.id, //was  slugify(result.title) but then this would break bookmarks if a title is changed
     confluenceUrl: `${baseUrl}${result._links.webui}`,
     createdDate: new Date(result.history.createdDate),
     author: {
       name: result.history.createdBy.displayName,
       email: result.history.createdBy.email,
     },
-    bodyHtml: result.body.view.value,
-    ancestorIds: result.ancestors.map(x => x.id),
+    bodyHtml: htmlBody,
+    labels: pLabels,
+    ancestors: result.ancestors,
+    images: pImages
   }
 
   const nodeId = createNodeId(`confluence-page-${content.confluenceId}`)
@@ -76,6 +142,14 @@ const formatPageNode = (
   return nodeData
 }
 
+
+async function formatAttachmentNode (helper,result,baseUrl,auth) {
+  let downloadUrl = baseUrl + result._links.download;
+  const response = await fetchRequest(downloadUrl, auth)
+  return response;
+}
+
+//no longer in use...
 // From: https://medium.com/@mhagemann/the-ultimate-way-to-slugify-a-url-string-in-javascript-b8e4a0d849e1
 const slugify = string => {
   const a = 'àáäâãåăæçèéëêǵḧìíïîḿńǹñòóöôœṕŕßśșțùúüûǘẃẍÿź·/_,:;'
@@ -92,3 +166,4 @@ const slugify = string => {
     .replace(/^-+/, '') // Trim - from start of text
     .replace(/-+$/, '') // Trim - from end of text
 }
+
