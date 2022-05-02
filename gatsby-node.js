@@ -1,4 +1,5 @@
 const fetch = require('node-fetch')
+const https = require('node:https')
 
 exports.sourceNodes = async (
   { actions, ...createNodeHelperFunctions },
@@ -23,15 +24,23 @@ exports.sourceNodes = async (
   })
 }
 
-const search = async ({ hostname, auth, cql, limit = 10 }) => {
+const search = async ({ hostname, auth, cql, limit = 10, ca = null }) => {
+  const options = {
+    headers: {
+      Authorization: auth,
+      Accept: 'application/json',
+    }
+  }
+  
+  if (ca) {
+    options.agent = new https.Agent({
+      ca: ca,
+    })
+  }
+  
   return await fetch(
     `https://${hostname}/wiki/rest/api/content/search/?cql=(${cql})&expand=body.view,history,ancestors&limit=${limit}`,
-    {
-      headers: {
-        Authorization: auth,
-        Accept: 'application/json',
-      },
-    }
+    options
   )
     .then(x => x.json())
     .catch(e => {
