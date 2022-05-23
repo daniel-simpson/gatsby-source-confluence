@@ -1,5 +1,5 @@
 const fetch = require('node-fetch')
-const https = require('node:https')
+const https = require('https')
 
 exports.sourceNodes = async (
   { actions, ...createNodeHelperFunctions },
